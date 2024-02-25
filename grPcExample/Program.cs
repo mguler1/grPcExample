@@ -6,13 +6,21 @@ using static grPcExample.Services.OrderGrpcServices.OrderGrpcServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddControllers();
 
+// Get ConnectionString
 var conn = builder.Configuration.GetConnectionString("DbConnection");
+
+// Register AppDbContext
 builder.Services.AddDbContext<AppDbContext>(db => db.UseSqlServer(conn));
+
+// Register ORder Service
 builder.Services.AddScoped<IOrderService, OrderService>();
+
+// Register Automapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-// Register Grpc 
 builder.Services.AddGrpc().AddJsonTranscoding();
+
 builder.Services.AddGrpcSwagger();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -26,22 +34,13 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(filePath);
     options.IncludeGrpcXmlComments(filePath, includeControllerXmlComments: true);
 });
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-app.MapGrpcService<OrderGrpcService>();
 app.UseSwagger();
 app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1"));
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.MapGrpcService<OrderGrpcService>();
 
+app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
